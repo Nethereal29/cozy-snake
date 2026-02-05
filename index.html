@@ -1,0 +1,691 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cozy Snake</title>
+    <link rel="icon" href="assets/icon.svg" />
+    <style>
+      :root {
+        --bg: #f5efe6;
+        --bg-2: #e8dac9;
+        --card: #fff7ee;
+        --ink: #3c2f2a;
+        --muted: #6b5b52;
+        --accent: #d67b5f;
+        --accent-2: #9bb48a;
+        --shadow: rgba(60, 47, 42, 0.18);
+        --glow-1: #fff8f1;
+        --glow-2: #f2e6d8;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        color: var(--ink);
+        background:
+          radial-gradient(1200px 800px at 10% 10%, var(--glow-1) 0%, transparent 60%),
+          radial-gradient(900px 600px at 90% 0%, var(--glow-2) 0%, transparent 55%),
+          linear-gradient(160deg, var(--bg) 0%, var(--bg-2) 100%);
+        font-family: "Alegreya", "Palatino Linotype", "Book Antiqua", "Georgia", serif;
+        padding: 20px 0;
+      }
+
+      .shell {
+        width: min(940px, 94vw);
+        display: grid;
+        gap: 20px;
+        grid-template-columns: minmax(260px, 1fr) minmax(320px, 1.2fr);
+        align-items: stretch;
+      }
+
+      .panel {
+        background: var(--card);
+        border: 1px solid #e6d6c4;
+        border-radius: 22px;
+        box-shadow: 0 16px 40px var(--shadow);
+        padding: 22px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .panel::after {
+        content: "";
+        position: absolute;
+        inset: -40% auto auto -20%;
+        width: 140px;
+        height: 140px;
+        background: radial-gradient(circle, rgba(214, 123, 95, 0.2), transparent 70%);
+        transform: rotate(20deg);
+      }
+
+      h1 {
+        margin: 0 0 6px;
+        font-size: 2.2rem;
+        letter-spacing: 0.5px;
+      }
+
+      .subtitle {
+        color: var(--muted);
+        font-size: 1rem;
+        margin-bottom: 18px;
+      }
+
+      .stats {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .stat {
+        background: #fff1e5;
+        border-radius: 16px;
+        padding: 12px 14px;
+        border: 1px solid #efd7c4;
+      }
+
+      .stat span {
+        display: block;
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+
+      .stat strong {
+        font-size: 1.4rem;
+      }
+
+      .controls {
+        margin-top: 18px;
+        display: grid;
+        gap: 8px;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 14px;
+        border-radius: 999px;
+        border: 1px dashed #d7b7a0;
+        color: var(--muted);
+        font-size: 0.9rem;
+        background: #fffaf4;
+        gap: 8px;
+      }
+
+      select {
+        border: none;
+        background: transparent;
+        font-family: inherit;
+        font-size: 0.9rem;
+        color: var(--ink);
+      }
+
+      button {
+        border: none;
+        border-radius: 14px;
+        padding: 12px 16px;
+        font-weight: 600;
+        cursor: pointer;
+        background: var(--accent);
+        color: #fff;
+        box-shadow: 0 12px 20px rgba(214, 123, 95, 0.24);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 16px 26px rgba(214, 123, 95, 0.3);
+      }
+
+      button:active {
+        transform: translateY(1px);
+      }
+
+      .canvas-wrap {
+        display: grid;
+        place-items: center;
+        gap: 14px;
+      }
+
+      canvas {
+        width: min(560px, 84vw);
+        height: min(560px, 84vw);
+        max-height: 560px;
+        aspect-ratio: 1 / 1;
+        background: radial-gradient(circle at 20% 20%, var(--glow-1), var(--bg-2));
+        border-radius: 24px;
+        border: 1px solid rgba(234, 212, 194, 0.6);
+        box-shadow:
+          inset 0 0 0 8px rgba(255, 243, 230, 0.75),
+          0 20px 40px rgba(60, 47, 42, 0.12);
+      }
+
+      .footer {
+        font-size: 0.85rem;
+        color: var(--muted);
+        text-align: center;
+      }
+
+      .overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(255, 247, 238, 0.9);
+        display: grid;
+        place-items: center;
+        text-align: center;
+        padding: 24px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+      }
+
+      .overlay.show {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .overlay h2 {
+        margin: 0 0 10px;
+      }
+
+      .overlay p {
+        margin: 0 0 16px;
+        color: var(--muted);
+      }
+
+      @media (max-width: 840px) {
+        .shell {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 640px) {
+        body {
+          padding: 14px 0 24px;
+        }
+
+        .panel {
+          padding: 18px;
+          border-radius: 18px;
+        }
+
+        h1 {
+          font-size: 1.8rem;
+        }
+
+        .subtitle {
+          font-size: 0.95rem;
+        }
+
+        .stats {
+          grid-template-columns: 1fr 1fr;
+          gap: 8px;
+        }
+
+        .stat strong {
+          font-size: 1.2rem;
+        }
+
+        .controls {
+          gap: 10px;
+        }
+
+        button {
+          width: 100%;
+        }
+
+        .pill {
+          width: 100%;
+          flex-wrap: wrap;
+          text-align: center;
+        }
+
+        canvas {
+          width: 92vw;
+          height: 92vw;
+          max-height: 92vw;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="panel">
+        <h1>Cozy Snake</h1>
+        <div class="subtitle">Sip something warm and grow a gentle little serpent.</div>
+        <div class="stats">
+          <div class="stat">
+            <span>Score</span>
+            <strong id="score">0</strong>
+          </div>
+          <div class="stat">
+            <span>Best</span>
+            <strong id="best">0</strong>
+          </div>
+          <div class="stat">
+            <span>Speed</span>
+            <strong id="speed">1</strong>
+          </div>
+          <div class="stat">
+            <span>Snacks</span>
+            <strong id="snacks">0</strong>
+          </div>
+        </div>
+        <div class="controls">
+          <button id="startBtn">Start / Pause</button>
+          <button id="restartBtn">Restart</button>
+          <label class="pill">
+            Theme:
+            <select id="themeSelect" aria-label="Theme selector">
+              <option value="rose">Soft Rose</option>
+              <option value="peach">Peachy</option>
+              <option value="sage">Gentle Green</option>
+              <option value="latte">Latte</option>
+            </select>
+          </label>
+          <div class="pill">Use arrow keys or WASD. Tap space to pause.</div>
+          <div class="pill">Collect tea biscuits 🍪 to increase speed.</div>
+        </div>
+      </section>
+
+      <section class="panel canvas-wrap">
+        <canvas id="board" width="420" height="420" aria-label="Snake game"></canvas>
+        <div class="footer">Edges are soft, but still solid. Cozy rules apply.</div>
+        <div class="overlay" id="overlay">
+          <div>
+            <h2 id="overlayTitle">Ready?</h2>
+            <p id="overlayMsg">Press Start or hit any arrow key to begin.</p>
+            <button id="overlayBtn">Let's Go</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const canvas = document.getElementById("board");
+      const ctx = canvas.getContext("2d");
+      const scoreEl = document.getElementById("score");
+      const bestEl = document.getElementById("best");
+      const speedEl = document.getElementById("speed");
+      const snacksEl = document.getElementById("snacks");
+      const startBtn = document.getElementById("startBtn");
+      const restartBtn = document.getElementById("restartBtn");
+      const overlay = document.getElementById("overlay");
+      const overlayTitle = document.getElementById("overlayTitle");
+      const overlayMsg = document.getElementById("overlayMsg");
+      const overlayBtn = document.getElementById("overlayBtn");
+      const themeSelect = document.getElementById("themeSelect");
+
+      const gridSize = 14;
+      const tileCount = canvas.width / gridSize;
+      const baseSpeed = 140;
+
+      let snake = [];
+      let direction = { x: 1, y: 0 };
+      let pendingDir = { x: 1, y: 0 };
+      let snack = { x: 8, y: 8 };
+      let lastTime = 0;
+      let running = false;
+      let gameOver = false;
+      let score = 0;
+      let best = Number(localStorage.getItem("cozy-snake-best") || 0);
+      let speedLevel = 1;
+      let snacks = 0;
+      let backgroundDots = [];
+
+      const themes = {
+        rose: {
+          name: "Soft Rose",
+          css: {
+            "--bg": "#f7e7ec",
+            "--bg-2": "#efd4de",
+            "--card": "#fff5f8",
+            "--ink": "#402f34",
+            "--muted": "#7a5e66",
+            "--accent": "#d8788e",
+            "--accent-2": "#b7c5a6",
+            "--shadow": "rgba(64, 47, 52, 0.18)",
+            "--glow-1": "#fff3f7",
+            "--glow-2": "#f4dfe8",
+          },
+          palette: {
+            gridGlow: ["#fff3f7", "#f1d9e3"],
+            dots: "rgba(210, 170, 185, 0.18)",
+            snakeHead: ["#c9b1bc", "#9f8696"],
+            snakeBody: ["#d3bdc6", "#b299a9"],
+            snack: ["#f7d5c6", "#d8788e"],
+            eye: "rgba(64, 47, 52, 0.55)",
+          },
+        },
+        peach: {
+          name: "Peachy",
+          css: {
+            "--bg": "#f7ebe0",
+            "--bg-2": "#efd9c6",
+            "--card": "#fff6ec",
+            "--ink": "#3f3026",
+            "--muted": "#6f5a4a",
+            "--accent": "#de8c6a",
+            "--accent-2": "#a8b89a",
+            "--shadow": "rgba(63, 48, 38, 0.18)",
+            "--glow-1": "#fff3e9",
+            "--glow-2": "#f3e2d3",
+          },
+          palette: {
+            gridGlow: ["#fff3e9", "#f1ddcc"],
+            dots: "rgba(214, 183, 160, 0.18)",
+            snakeHead: ["#b3c2ad", "#8ea48f"],
+            snakeBody: ["#c0cfb5", "#9fb28f"],
+            snack: ["#f8d8b5", "#de8c6a"],
+            eye: "rgba(63, 48, 38, 0.55)",
+          },
+        },
+        sage: {
+          name: "Gentle Green",
+          css: {
+            "--bg": "#eef3ea",
+            "--bg-2": "#dbe6d2",
+            "--card": "#f6faf1",
+            "--ink": "#2f3a31",
+            "--muted": "#5e6b60",
+            "--accent": "#9bb48a",
+            "--accent-2": "#caa98d",
+            "--shadow": "rgba(47, 58, 49, 0.18)",
+            "--glow-1": "#f3f8ee",
+            "--glow-2": "#e3edd8",
+          },
+          palette: {
+            gridGlow: ["#f3f8ee", "#dee9d2"],
+            dots: "rgba(162, 184, 154, 0.18)",
+            snakeHead: ["#a6b8a2", "#7f9a82"],
+            snakeBody: ["#b4c7ad", "#8eaa8f"],
+            snack: ["#f0d7b9", "#caa98d"],
+            eye: "rgba(47, 58, 49, 0.55)",
+          },
+        },
+        latte: {
+          name: "Latte",
+          css: {
+            "--bg": "#f4eee5",
+            "--bg-2": "#e3d6c7",
+            "--card": "#fff7ee",
+            "--ink": "#3c2f2a",
+            "--muted": "#6b5b52",
+            "--accent": "#d67b5f",
+            "--accent-2": "#9bb48a",
+            "--shadow": "rgba(60, 47, 42, 0.18)",
+            "--glow-1": "#fff8f1",
+            "--glow-2": "#f2e6d8",
+          },
+          palette: {
+            gridGlow: ["#fff8f1", "#f6e7d6"],
+            dots: "rgba(230, 210, 190, 0.15)",
+            snakeHead: ["#9fc1ab", "#7ea08a"],
+            snakeBody: ["#a8c09a", "#8fb58a"],
+            snack: ["#f6d7b2", "#d67b5f"],
+            eye: "rgba(60, 47, 42, 0.55)",
+          },
+        },
+      };
+
+      let palette = themes.latte.palette;
+
+      function resetGame() {
+        snake = [
+          { x: 4, y: 10 },
+          { x: 3, y: 10 },
+          { x: 2, y: 10 },
+        ];
+        direction = { x: 1, y: 0 };
+        pendingDir = { x: 1, y: 0 };
+        snack = randomSnack();
+        score = 0;
+        speedLevel = 1;
+        snacks = 0;
+        gameOver = false;
+        backgroundDots = buildBackgroundDots();
+        updateStats();
+        showOverlay("Ready?", "Press Start or hit any arrow key to begin.");
+      }
+
+      function buildBackgroundDots() {
+        const dots = [];
+        for (let i = 0; i < 22; i++) {
+          dots.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            r: 6 + Math.random() * 18,
+          });
+        }
+        return dots;
+      }
+
+      function setTheme(key) {
+        const theme = themes[key] || themes.latte;
+        Object.entries(theme.css).forEach(([prop, value]) => {
+          document.documentElement.style.setProperty(prop, value);
+        });
+        palette = theme.palette;
+        localStorage.setItem("cozy-snake-theme", key);
+        draw();
+      }
+
+      function updateStats() {
+        scoreEl.textContent = score;
+        bestEl.textContent = best;
+        speedEl.textContent = speedLevel;
+        snacksEl.textContent = snacks;
+      }
+
+      function randomSnack() {
+        let spot;
+        do {
+          spot = {
+            x: Math.floor(Math.random() * tileCount),
+            y: Math.floor(Math.random() * tileCount),
+          };
+        } while (snake.some((segment) => segment.x === spot.x && segment.y === spot.y));
+        return spot;
+      }
+
+      function setDirection(x, y) {
+        if (running && (direction.x === -x || direction.y === -y)) return;
+        pendingDir = { x, y };
+        if (!running && !gameOver) {
+          toggleRun(true);
+        }
+      }
+
+      function toggleRun(forceStart = false) {
+        if (gameOver) return;
+        running = forceStart ? true : !running;
+        if (running) hideOverlay();
+      }
+
+      function endGame() {
+        gameOver = true;
+        running = false;
+        overlayTitle.textContent = "Too Cozy!";
+        overlayMsg.textContent = "Your snake curled into a knot. Restart for another cup.";
+        overlay.classList.add("show");
+      }
+
+      function showOverlay(title, msg) {
+        overlayTitle.textContent = title;
+        overlayMsg.textContent = msg;
+        overlay.classList.add("show");
+      }
+
+      function hideOverlay() {
+        overlay.classList.remove("show");
+      }
+
+      function tick(timestamp) {
+        requestAnimationFrame(tick);
+        if (!running) return;
+        const speed = baseSpeed - (speedLevel - 1) * 8;
+        if (timestamp - lastTime < speed) return;
+        lastTime = timestamp;
+        direction = { ...pendingDir };
+        const head = {
+          x: (snake[0].x + direction.x + tileCount) % tileCount,
+          y: (snake[0].y + direction.y + tileCount) % tileCount,
+        };
+
+        if (snake.some((segment) => segment.x === head.x && segment.y === head.y)) {
+          endGame();
+          return;
+        }
+
+        snake.unshift(head);
+        if (head.x === snack.x && head.y === snack.y) {
+          score += 10;
+          snacks += 1;
+          if (snacks % 3 === 0) {
+            speedLevel = Math.min(speedLevel + 1, 8);
+          }
+          snack = randomSnack();
+          best = Math.max(best, score);
+          localStorage.setItem("cozy-snake-best", best);
+        } else {
+          snake.pop();
+        }
+
+        updateStats();
+        draw();
+      }
+
+      function drawGrid() {
+        const grad = ctx.createRadialGradient(60, 60, 40, canvas.width / 2, canvas.height / 2, 320);
+        grad.addColorStop(0, palette.gridGlow[0]);
+        grad.addColorStop(1, palette.gridGlow[1]);
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = palette.dots;
+        backgroundDots.forEach((dot) => {
+          ctx.beginPath();
+          ctx.arc(dot.x, dot.y, dot.r, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }
+
+      function drawSnack() {
+        const x = snack.x * gridSize;
+        const y = snack.y * gridSize;
+        const snackGrad = ctx.createRadialGradient(
+          x + gridSize * 0.4,
+          y + gridSize * 0.4,
+          2,
+          x + gridSize * 0.6,
+          y + gridSize * 0.6,
+          gridSize
+        );
+        snackGrad.addColorStop(0, palette.snack[0]);
+        snackGrad.addColorStop(1, palette.snack[1]);
+        ctx.fillStyle = snackGrad;
+        ctx.beginPath();
+        ctx.roundRect(x + 2, y + 2, gridSize - 4, gridSize - 4, 10);
+        ctx.fill();
+      }
+
+      function drawSnake() {
+        snake.forEach((segment, index) => {
+          const x = segment.x * gridSize;
+          const y = segment.y * gridSize;
+          const bodyGrad = ctx.createLinearGradient(x, y, x + gridSize, y + gridSize);
+          const tones = index === 0 ? palette.snakeHead : palette.snakeBody;
+          bodyGrad.addColorStop(0, tones[0]);
+          bodyGrad.addColorStop(1, tones[1]);
+          ctx.fillStyle = bodyGrad;
+          ctx.beginPath();
+          ctx.roundRect(x + 1, y + 1, gridSize - 2, gridSize - 2, 9);
+          ctx.fill();
+          if (index === 0) {
+            ctx.fillStyle = palette.eye;
+            ctx.beginPath();
+            ctx.arc(x + gridSize * 0.68, y + gridSize * 0.45, 1.6, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        });
+      }
+
+      function draw() {
+        drawGrid();
+        drawSnack();
+        drawSnake();
+      }
+
+      document.addEventListener("keydown", (event) => {
+        switch (event.key.toLowerCase()) {
+          case "arrowup":
+          case "w":
+            event.preventDefault();
+            setDirection(0, -1);
+            break;
+          case "arrowdown":
+          case "s":
+            event.preventDefault();
+            setDirection(0, 1);
+            break;
+          case "arrowleft":
+          case "a":
+            event.preventDefault();
+            setDirection(-1, 0);
+            break;
+          case "arrowright":
+          case "d":
+            event.preventDefault();
+            setDirection(1, 0);
+            break;
+          case " ":
+            event.preventDefault();
+            toggleRun();
+            break;
+          default:
+            break;
+        }
+      });
+
+      startBtn.addEventListener("click", () => toggleRun());
+      restartBtn.addEventListener("click", () => {
+        resetGame();
+        draw();
+      });
+      themeSelect.addEventListener("change", (event) => setTheme(event.target.value));
+      overlayBtn.addEventListener("click", () => {
+        toggleRun(true);
+      });
+
+      CanvasRenderingContext2D.prototype.roundRect =
+        CanvasRenderingContext2D.prototype.roundRect ||
+        function (x, y, w, h, r) {
+          const radius = Math.min(r, w / 2, h / 2);
+          this.beginPath();
+          this.moveTo(x + radius, y);
+          this.lineTo(x + w - radius, y);
+          this.quadraticCurveTo(x + w, y, x + w, y + radius);
+          this.lineTo(x + w, y + h - radius);
+          this.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+          this.lineTo(x + radius, y + h);
+          this.quadraticCurveTo(x, y + h, x, y + h - radius);
+          this.lineTo(x, y + radius);
+          this.quadraticCurveTo(x, y, x + radius, y);
+          this.closePath();
+        };
+
+      resetGame();
+      const savedTheme = localStorage.getItem("cozy-snake-theme") || "latte";
+      themeSelect.value = savedTheme;
+      setTheme(savedTheme);
+      draw();
+      requestAnimationFrame(tick);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,38 @@
+{
+  "name": "cozy-snake-puzzle",
+  "version": "1.0.0",
+  "description": "Cozy Snake Puzzle desktop app",
+  "main": "main.js",
+  "author": "",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir"
+  },
+  "devDependencies": {
+    "electron": "10.4.7",
+    "electron-builder": "22.11.7"
+  },
+  "build": {
+    "appId": "com.cozy.snake.puzzle",
+    "productName": "Cozy Snake Puzzle",
+    "files": [
+      "index.html",
+      "main.js",
+      "assets/**"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "mac": {
+      "target": [
+        "dir"
+      ]
+    },
+    "win": {
+      "target": [
+        "dir"
+      ]
+    }
+  }
+}

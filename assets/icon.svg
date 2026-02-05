@@ -1,0 +1,22 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff3e9"/>
+      <stop offset="1" stop-color="#f0d9c6"/>
+    </linearGradient>
+    <linearGradient id="snake" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#a8c09a"/>
+      <stop offset="1" stop-color="#7ea08a"/>
+    </linearGradient>
+  </defs>
+  <rect x="24" y="24" width="464" height="464" rx="120" fill="url(#bg)"/>
+  <path
+    d="M156 196c0-44 36-80 80-80h84c44 0 80 36 80 80s-36 80-80 80h-68c-26 0-48 22-48 48s22 48 48 48h92"
+    fill="none"
+    stroke="url(#snake)"
+    stroke-width="52"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <circle cx="336" cy="196" r="8" fill="#3c2f2a" opacity="0.6"/>
+</svg>
