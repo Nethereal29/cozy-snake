@@ -254,7 +254,7 @@
         }
 
         canvas {
-          width: 92vw;
+          width: min(92vw, 55vh);
           max-width: 92vw;
         }
       }
@@ -283,19 +283,19 @@
         .shell {
           width: 100%;
           gap: 0;
-        }
-
-        body.playing .shell {
           grid-template-columns: 1fr;
         }
 
-        body.playing .shell > .panel:first-child {
-          display: none;
+        .info-panel {
+          order: 1;
+          border-radius: 0 0 18px 18px;
+          padding: 16px;
         }
 
-        body.playing .shell > .panel:last-child {
-          border-radius: 0;
-          min-height: 100vh;
+        .game-panel {
+          order: 2;
+          border-radius: 18px 18px 0 0;
+          padding: 16px;
         }
 
         .pause-fab {
@@ -308,7 +308,7 @@
   </head>
   <body>
     <main class="shell">
-      <section class="panel">
+      <section class="panel info-panel">
         <h1>Cozy Snake</h1>
         <div class="subtitle">Sip something warm and grow a gentle little serpent.</div>
         <div class="stats">
@@ -346,7 +346,7 @@
         </div>
       </section>
 
-      <section class="panel canvas-wrap">
+      <section class="panel canvas-wrap game-panel">
         <canvas id="board" width="420" height="420" aria-label="Snake game"></canvas>
         <div class="footer">Edges are soft, but still solid. Cozy rules apply.</div>
         <button id="pauseFab" class="pause-fab" aria-label="Pause">⏯</button>
@@ -362,6 +362,7 @@
 
     <script>
       const canvas = document.getElementById("board");
+      const gamePanel = document.querySelector(".game-panel");
       const ctx = canvas.getContext("2d");
       const scoreEl = document.getElementById("score");
       const bestEl = document.getElementById("best");
@@ -729,13 +730,17 @@
       }
 
       let touchStart = null;
-      canvas.addEventListener("touchstart", (event) => {
+      const swipeTarget = document.body;
+
+      swipeTarget.addEventListener("touchstart", (event) => {
+        if (!running) return;
         const touch = event.touches[0];
         if (!touch) return;
         touchStart = { x: touch.clientX, y: touch.clientY };
       });
 
-      canvas.addEventListener("touchend", (event) => {
+      swipeTarget.addEventListener("touchend", (event) => {
+        if (!running) return;
         const touch = event.changedTouches[0];
         if (!touch || !touchStart) return;
         const dx = touch.clientX - touchStart.x;
@@ -751,7 +756,7 @@
         touchStart = null;
       });
 
-      canvas.addEventListener(
+      swipeTarget.addEventListener(
         "touchmove",
         (event) => {
           if (running) event.preventDefault();
