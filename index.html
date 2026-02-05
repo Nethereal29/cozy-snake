@@ -37,6 +37,11 @@
         padding: 20px 0;
       }
 
+      body.playing {
+        overflow: hidden;
+        touch-action: none;
+      }
+
       .shell {
         width: min(940px, 94vw);
         display: grid;
@@ -254,44 +259,49 @@
         }
       }
 
-      .touch-controls {
-        display: none;
-        gap: 10px;
-        width: 100%;
-        justify-content: center;
-        align-items: center;
-      }
-
-      .touch-btn {
-        width: 62px;
-        height: 62px;
-        border-radius: 18px;
+      .pause-fab {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
         border: 1px solid rgba(214, 183, 160, 0.6);
         background: #fff7ee;
         box-shadow: 0 10px 18px rgba(60, 47, 42, 0.12);
         font-size: 1.1rem;
         font-weight: 600;
         color: var(--ink);
-      }
-
-      .touch-controls {
         display: none;
-        grid-template-columns: 70px 70px 70px 70px;
-        grid-template-rows: 70px 70px 70px;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
       }
-
-      .tc-up { grid-column: 2; grid-row: 1; }
-      .tc-left { grid-column: 1; grid-row: 2; }
-      .tc-down { grid-column: 2; grid-row: 3; }
-      .tc-right { grid-column: 3; grid-row: 2; }
-      .tc-pause { grid-column: 4; grid-row: 2; }
 
       @media (max-width: 700px) {
-        .touch-controls {
-          display: grid;
+        body.playing {
+          padding: 0;
+        }
+
+        .shell {
+          width: 100%;
+          gap: 0;
+        }
+
+        body.playing .shell {
+          grid-template-columns: 1fr;
+        }
+
+        body.playing .shell > .panel:first-child {
+          display: none;
+        }
+
+        body.playing .shell > .panel:last-child {
+          border-radius: 0;
+          min-height: 100vh;
+        }
+
+        .pause-fab {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
         }
       }
     </style>
@@ -339,13 +349,7 @@
       <section class="panel canvas-wrap">
         <canvas id="board" width="420" height="420" aria-label="Snake game"></canvas>
         <div class="footer">Edges are soft, but still solid. Cozy rules apply.</div>
-        <div class="touch-controls" aria-label="Touch controls">
-          <button class="touch-btn tc-up" data-dir="up">▲</button>
-          <button class="touch-btn tc-left" data-dir="left">◀</button>
-          <button class="touch-btn tc-down" data-dir="down">▼</button>
-          <button class="touch-btn tc-right" data-dir="right">▶</button>
-          <button class="touch-btn tc-pause" data-action="pause">⏯</button>
-        </div>
+        <button id="pauseFab" class="pause-fab" aria-label="Pause">⏯</button>
         <div class="overlay" id="overlay">
           <div>
             <h2 id="overlayTitle">Ready?</h2>
@@ -370,7 +374,7 @@
       const overlayMsg = document.getElementById("overlayMsg");
       const overlayBtn = document.getElementById("overlayBtn");
       const themeSelect = document.getElementById("themeSelect");
-      const touchControls = document.querySelector(".touch-controls");
+      const pauseFab = document.getElementById("pauseFab");
 
       const gridSize = 14;
       const tileCount = canvas.width / gridSize;
@@ -555,12 +559,14 @@
       function toggleRun(forceStart = false) {
         if (gameOver) return;
         running = forceStart ? true : !running;
+        document.body.classList.toggle("playing", running);
         if (running) hideOverlay();
       }
 
       function endGame() {
         gameOver = true;
         running = false;
+        document.body.classList.remove("playing");
         overlayTitle.textContent = "Too Cozy!";
         overlayMsg.textContent = "Your snake curled into a knot. Restart for another cup.";
         overlay.classList.add("show");
@@ -570,6 +576,7 @@
         overlayTitle.textContent = title;
         overlayMsg.textContent = msg;
         overlay.classList.add("show");
+        document.body.classList.remove("playing");
       }
 
       function hideOverlay() {
@@ -721,15 +728,6 @@
         }
       }
 
-      touchControls?.addEventListener("click", (event) => {
-        const target = event.target.closest("button");
-        if (!target) return;
-        const dir = target.dataset.dir;
-        const action = target.dataset.action;
-        if (dir) handleDir(dir);
-        if (action === "pause") toggleRun();
-      });
-
       let touchStart = null;
       canvas.addEventListener("touchstart", (event) => {
         const touch = event.touches[0];
@@ -753,6 +751,14 @@
         touchStart = null;
       });
 
+      canvas.addEventListener(
+        "touchmove",
+        (event) => {
+          if (running) event.preventDefault();
+        },
+        { passive: false }
+      );
+
       startBtn.addEventListener("click", () => toggleRun());
       restartBtn.addEventListener("click", () => {
         resetGame();
@@ -762,6 +768,7 @@
       overlayBtn.addEventListener("click", () => {
         toggleRun(true);
       });
+      pauseFab.addEventListener("click", () => toggleRun());
 
       CanvasRenderingContext2D.prototype.roundRect =
         CanvasRenderingContext2D.prototype.roundRect ||
