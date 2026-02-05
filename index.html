@@ -160,6 +160,18 @@
         align-content: start;
       }
 
+      .game-panel {
+        display: none;
+      }
+
+      body.playing .game-panel {
+        display: grid;
+      }
+
+      body.playing .info-panel {
+        display: none;
+      }
+
       canvas {
         width: 100%;
         height: auto;
@@ -177,6 +189,31 @@
         font-size: 0.85rem;
         color: var(--muted);
         text-align: center;
+      }
+
+      .run-stats {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .run-stat {
+        background: #fff1e5;
+        border-radius: 14px;
+        padding: 10px 12px;
+        border: 1px solid #efd7c4;
+        text-align: center;
+      }
+
+      .run-stat span {
+        display: block;
+        font-size: 0.75rem;
+        color: var(--muted);
+      }
+
+      .run-stat strong {
+        font-size: 1.1rem;
       }
 
       .overlay {
@@ -286,15 +323,9 @@
           grid-template-columns: 1fr;
         }
 
-        .info-panel {
-          order: 1;
-          border-radius: 0 0 18px 18px;
-          padding: 16px;
-        }
-
         .game-panel {
-          order: 2;
-          border-radius: 18px 18px 0 0;
+          border-radius: 0;
+          min-height: 100vh;
           padding: 16px;
         }
 
@@ -347,6 +378,24 @@
       </section>
 
       <section class="panel canvas-wrap game-panel">
+        <div class="run-stats" aria-label="Run stats">
+          <div class="run-stat">
+            <span>Score</span>
+            <strong id="runScore">0</strong>
+          </div>
+          <div class="run-stat">
+            <span>Best</span>
+            <strong id="runBest">0</strong>
+          </div>
+          <div class="run-stat">
+            <span>Speed</span>
+            <strong id="runSpeed">1</strong>
+          </div>
+          <div class="run-stat">
+            <span>Snacks</span>
+            <strong id="runSnacks">0</strong>
+          </div>
+        </div>
         <canvas id="board" width="420" height="420" aria-label="Snake game"></canvas>
         <div class="footer">Edges are soft, but still solid. Cozy rules apply.</div>
         <button id="pauseFab" class="pause-fab" aria-label="Pause">⏯</button>
@@ -368,6 +417,10 @@
       const bestEl = document.getElementById("best");
       const speedEl = document.getElementById("speed");
       const snacksEl = document.getElementById("snacks");
+      const runScoreEl = document.getElementById("runScore");
+      const runBestEl = document.getElementById("runBest");
+      const runSpeedEl = document.getElementById("runSpeed");
+      const runSnacksEl = document.getElementById("runSnacks");
       const startBtn = document.getElementById("startBtn");
       const restartBtn = document.getElementById("restartBtn");
       const overlay = document.getElementById("overlay");
@@ -393,6 +446,7 @@
       let speedLevel = 1;
       let snacks = 0;
       let backgroundDots = [];
+      let sessionActive = false;
 
       const themes = {
         rose: {
@@ -504,6 +558,7 @@
         speedLevel = 1;
         snacks = 0;
         gameOver = false;
+        sessionActive = false;
         backgroundDots = buildBackgroundDots();
         updateStats();
         showOverlay("Ready?", "Press Start or hit any arrow key to begin.");
@@ -536,6 +591,10 @@
         bestEl.textContent = best;
         speedEl.textContent = speedLevel;
         snacksEl.textContent = snacks;
+        runScoreEl.textContent = score;
+        runBestEl.textContent = best;
+        runSpeedEl.textContent = speedLevel;
+        runSnacksEl.textContent = snacks;
       }
 
       function randomSnack() {
@@ -559,14 +618,19 @@
 
       function toggleRun(forceStart = false) {
         if (gameOver) return;
+        const starting = forceStart || !sessionActive;
         running = forceStart ? true : !running;
-        document.body.classList.toggle("playing", running);
+        if (starting) {
+          sessionActive = true;
+          document.body.classList.add("playing");
+        }
         if (running) hideOverlay();
       }
 
       function endGame() {
         gameOver = true;
         running = false;
+        sessionActive = false;
         document.body.classList.remove("playing");
         overlayTitle.textContent = "Too Cozy!";
         overlayMsg.textContent = "Your snake curled into a knot. Restart for another cup.";
@@ -577,6 +641,7 @@
         overlayTitle.textContent = title;
         overlayMsg.textContent = msg;
         overlay.classList.add("show");
+        sessionActive = false;
         document.body.classList.remove("playing");
       }
 
