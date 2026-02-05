@@ -150,14 +150,15 @@
 
       .canvas-wrap {
         display: grid;
-        place-items: center;
         gap: 14px;
+        justify-items: center;
+        align-content: start;
       }
 
       canvas {
-        width: min(560px, 84vw);
-        height: min(560px, 84vw);
-        max-height: 560px;
+        width: 100%;
+        height: auto;
+        max-width: 560px;
         aspect-ratio: 1 / 1;
         background: radial-gradient(circle at 20% 20%, var(--glow-1), var(--bg-2));
         border-radius: 24px;
@@ -249,14 +250,13 @@
 
         canvas {
           width: 92vw;
-          height: 92vw;
-          max-height: 92vw;
+          max-width: 92vw;
         }
       }
 
       .touch-controls {
         display: none;
-        gap: 12px;
+        gap: 10px;
         width: 100%;
         justify-content: center;
         align-items: center;
@@ -274,15 +274,24 @@
         color: var(--ink);
       }
 
-      .touch-column {
-        display: grid;
-        gap: 10px;
+      .touch-controls {
+        display: none;
+        grid-template-columns: 70px 70px 70px 70px;
+        grid-template-rows: 70px 70px 70px;
+        justify-content: center;
         align-items: center;
+        width: 100%;
       }
+
+      .tc-up { grid-column: 2; grid-row: 1; }
+      .tc-left { grid-column: 1; grid-row: 2; }
+      .tc-down { grid-column: 2; grid-row: 3; }
+      .tc-right { grid-column: 3; grid-row: 2; }
+      .tc-pause { grid-column: 4; grid-row: 2; }
 
       @media (max-width: 700px) {
         .touch-controls {
-          display: flex;
+          display: grid;
         }
       }
     </style>
@@ -331,13 +340,11 @@
         <canvas id="board" width="420" height="420" aria-label="Snake game"></canvas>
         <div class="footer">Edges are soft, but still solid. Cozy rules apply.</div>
         <div class="touch-controls" aria-label="Touch controls">
-          <button class="touch-btn" data-dir="up">▲</button>
-          <div class="touch-column">
-            <button class="touch-btn" data-dir="left">◀</button>
-            <button class="touch-btn" data-dir="down">▼</button>
-          </div>
-          <button class="touch-btn" data-dir="right">▶</button>
-          <button class="touch-btn" data-action="pause">⏯</button>
+          <button class="touch-btn tc-up" data-dir="up">▲</button>
+          <button class="touch-btn tc-left" data-dir="left">◀</button>
+          <button class="touch-btn tc-down" data-dir="down">▼</button>
+          <button class="touch-btn tc-right" data-dir="right">▶</button>
+          <button class="touch-btn tc-pause" data-action="pause">⏯</button>
         </div>
         <div class="overlay" id="overlay">
           <div>
