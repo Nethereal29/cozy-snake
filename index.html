@@ -124,6 +124,17 @@
         gap: 8px;
       }
 
+      .pill input {
+        border: none;
+        background: transparent;
+        font-family: inherit;
+        font-size: 0.9rem;
+        color: var(--ink);
+        outline: none;
+        width: 140px;
+        text-align: right;
+      }
+
       select {
         border: none;
         background: transparent;
@@ -367,6 +378,10 @@
           </div>
         </div>
         <div class="controls">
+          <label class="pill" style="justify-content: space-between;">
+            Name:
+            <input id="playerName" type="text" maxlength="24" placeholder="Your name" />
+          </label>
           <button id="startBtn">Start / Pause</button>
           <button id="restartBtn">Restart</button>
           <label class="pill">
@@ -437,6 +452,7 @@
       const overlayBtn = document.getElementById("overlayBtn");
       const themeSelect = document.getElementById("themeSelect");
       const pauseFab = document.getElementById("pauseFab");
+      const playerNameInput = document.getElementById("playerName");
 
       const gridSize = 14;
       const tileCount = canvas.width / gridSize;
@@ -455,6 +471,7 @@
       let snacks = 0;
       let backgroundDots = [];
       let sessionActive = false;
+      const API_BASE = window.COZY_API_BASE || "https://cozy-snake.onrender.com";
 
       const themes = {
         rose: {
@@ -643,6 +660,7 @@
         overlayTitle.textContent = "Too Cozy!";
         overlayMsg.textContent = "Your snake curled into a knot. Restart for another cup.";
         overlay.classList.add("show");
+        submitScore();
       }
 
       function showOverlay(title, msg) {
@@ -651,6 +669,43 @@
         overlay.classList.add("show");
         sessionActive = false;
         document.body.classList.remove("playing");
+      }
+
+      async function loadRemoteBest(name) {
+        if (!name) return;
+        try {
+          const res = await fetch(`${API_BASE}/best?name=${encodeURIComponent(name)}`);
+          if (!res.ok) return;
+          const data = await res.json();
+          if (data?.item?.best != null) {
+            best = Math.max(best, data.item.best);
+            localStorage.setItem("cozy-snake-best", best);
+            updateStats();
+          }
+        } catch (err) {
+          // ignore network errors
+        }
+      }
+
+      async function submitScore() {
+        const name = playerNameInput.value.trim();
+        if (!name) return;
+        try {
+          const res = await fetch(`${API_BASE}/score`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, score })
+          });
+          if (!res.ok) return;
+          const data = await res.json();
+          if (data?.best != null) {
+            best = Math.max(best, data.best);
+            localStorage.setItem("cozy-snake-best", best);
+            updateStats();
+          }
+        } catch (err) {
+          // ignore network errors
+        }
       }
 
       function hideOverlay() {
@@ -847,6 +902,11 @@
         toggleRun(true);
       });
       pauseFab.addEventListener("click", () => toggleRun());
+      playerNameInput.addEventListener("change", (event) => {
+        const value = event.target.value.trim();
+        localStorage.setItem("cozy-snake-name", value);
+        loadRemoteBest(value);
+      });
 
       CanvasRenderingContext2D.prototype.roundRect =
         CanvasRenderingContext2D.prototype.roundRect ||
@@ -866,6 +926,9 @@
         };
 
       resetGame();
+      const savedName = localStorage.getItem("cozy-snake-name") || "";
+      playerNameInput.value = savedName;
+      if (savedName) loadRemoteBest(savedName);
       const savedTheme = localStorage.getItem("cozy-snake-theme") || "latte";
       themeSelect.value = savedTheme;
       setTheme(savedTheme);
