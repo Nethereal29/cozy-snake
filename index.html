@@ -677,11 +677,9 @@
       }
 
       function setDirection(x, y) {
-        if (running && (direction.x === -x || direction.y === -y)) return;
+        if (!running) return;
+        if (direction.x === -x || direction.y === -y) return;
         pendingDir = { x, y };
-        if (!running && !gameOver) {
-          toggleRun(true);
-        }
       }
 
       function toggleRun(forceStart = false) {
@@ -880,30 +878,35 @@
       }
 
       document.addEventListener("keydown", (event) => {
+        const isTyping =
+          document.activeElement &&
+          (document.activeElement.tagName === "INPUT" ||
+            document.activeElement.tagName === "TEXTAREA");
+        if (isTyping) return;
         switch (event.key.toLowerCase()) {
           case "arrowup":
           case "w":
             event.preventDefault();
-            setDirection(0, -1);
+            if (running) setDirection(0, -1);
             break;
           case "arrowdown":
           case "s":
             event.preventDefault();
-            setDirection(0, 1);
+            if (running) setDirection(0, 1);
             break;
           case "arrowleft":
           case "a":
             event.preventDefault();
-            setDirection(-1, 0);
+            if (running) setDirection(-1, 0);
             break;
           case "arrowright":
           case "d":
             event.preventDefault();
-            setDirection(1, 0);
+            if (running) setDirection(1, 0);
             break;
           case " ":
             event.preventDefault();
-            toggleRun();
+            if (sessionActive) toggleRun();
             break;
           default:
             break;
