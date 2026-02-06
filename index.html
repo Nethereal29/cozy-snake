@@ -224,6 +224,43 @@
         align-self: center;
       }
 
+      .leaderboard {
+        margin-top: 16px;
+        background: #fff6ec;
+        border: 1px solid #efd7c4;
+        border-radius: 18px;
+        padding: 12px;
+      }
+
+      .leaderboard-title {
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+
+      .leaderboard-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 6px;
+        font-size: 0.95rem;
+      }
+
+      .leaderboard-list li {
+        display: flex;
+        justify-content: space-between;
+        background: #fffaf4;
+        border-radius: 12px;
+        padding: 8px 10px;
+        border: 1px solid #ead4c2;
+      }
+
+      .leaderboard-foot {
+        margin-top: 8px;
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+
       .overlay {
         position: absolute;
         inset: 0;
@@ -396,6 +433,11 @@
           <div class="pill">Use arrow keys or WASD. Tap space to pause.</div>
           <div class="pill">Collect tea biscuits 🍪 to increase speed.</div>
         </div>
+        <div class="leaderboard">
+          <div class="leaderboard-title">Leaderboard</div>
+          <ol id="leaderboardList" class="leaderboard-list"></ol>
+          <div class="leaderboard-foot">Top 10 players</div>
+        </div>
       </section>
 
       <section class="panel canvas-wrap game-panel">
@@ -453,6 +495,7 @@
       const themeSelect = document.getElementById("themeSelect");
       const pauseFab = document.getElementById("pauseFab");
       const playerNameInput = document.getElementById("playerName");
+      const leaderboardList = document.getElementById("leaderboardList");
 
       const gridSize = 14;
       const tileCount = canvas.width / gridSize;
@@ -687,6 +730,34 @@
         }
       }
 
+      async function loadLeaderboard() {
+        try {
+          const res = await fetch(`${API_BASE}/leaderboard?limit=10`);
+          if (!res.ok) return;
+          const data = await res.json();
+          const items = Array.isArray(data?.items) ? data.items : [];
+          leaderboardList.innerHTML = "";
+          if (items.length === 0) {
+            const li = document.createElement("li");
+            li.textContent = "No scores yet";
+            leaderboardList.appendChild(li);
+            return;
+          }
+          items.forEach((item, idx) => {
+            const li = document.createElement("li");
+            const name = document.createElement("span");
+            name.textContent = `${idx + 1}. ${item.name}`;
+            const scoreEl = document.createElement("strong");
+            scoreEl.textContent = item.best;
+            li.appendChild(name);
+            li.appendChild(scoreEl);
+            leaderboardList.appendChild(li);
+          });
+        } catch (err) {
+          // ignore
+        }
+      }
+
       async function submitScore() {
         const name = playerNameInput.value.trim();
         if (!name) return;
@@ -702,6 +773,7 @@
             best = Math.max(best, data.best);
             localStorage.setItem("cozy-snake-best", best);
             updateStats();
+            loadLeaderboard();
           }
         } catch (err) {
           // ignore network errors
@@ -932,6 +1004,7 @@
       const savedTheme = localStorage.getItem("cozy-snake-theme") || "latte";
       themeSelect.value = savedTheme;
       setTheme(savedTheme);
+      loadLeaderboard();
       draw();
       requestAnimationFrame(tick);
     </script>
