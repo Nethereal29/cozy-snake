@@ -514,6 +514,7 @@
       let snacks = 0;
       let backgroundDots = [];
       let sessionActive = false;
+      let currentName = "";
       const API_BASE = window.COZY_API_BASE || "https://cozy-snake.onrender.com";
 
       const themes = {
@@ -682,9 +683,22 @@
         pendingDir = { x, y };
       }
 
+      function ensureName() {
+        const value = playerNameInput.value.trim();
+        if (!value) {
+          showOverlay("Name required", "Please enter a name to start the game.");
+          playerNameInput.focus();
+          return false;
+        }
+        currentName = value;
+        localStorage.setItem("cozy-snake-name", currentName);
+        return true;
+      }
+
       function toggleRun(forceStart = false) {
         if (gameOver) return;
         const starting = forceStart || !sessionActive;
+        if (starting && !ensureName()) return;
         running = forceStart ? true : !running;
         if (starting) {
           sessionActive = true;
@@ -757,7 +771,7 @@
       }
 
       async function submitScore() {
-        const name = playerNameInput.value.trim();
+        const name = currentName || playerNameInput.value.trim();
         if (!name) return;
         try {
           const res = await fetch(`${API_BASE}/score`, {
@@ -980,6 +994,7 @@
       playerNameInput.addEventListener("change", (event) => {
         const value = event.target.value.trim();
         localStorage.setItem("cozy-snake-name", value);
+        currentName = value;
         loadRemoteBest(value);
       });
 
@@ -1003,6 +1018,7 @@
       resetGame();
       const savedName = localStorage.getItem("cozy-snake-name") || "";
       playerNameInput.value = savedName;
+      currentName = savedName;
       if (savedName) loadRemoteBest(savedName);
       const savedTheme = localStorage.getItem("cozy-snake-theme") || "latte";
       themeSelect.value = savedTheme;
